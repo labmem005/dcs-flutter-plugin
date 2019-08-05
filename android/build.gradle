@@ -33,6 +33,7 @@ android {
     }
     defaultConfig {
         minSdkVersion 16
+        targetSdkVersion 22
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "APP_KEY", "\"com.baidu.dumi.open.far\"")

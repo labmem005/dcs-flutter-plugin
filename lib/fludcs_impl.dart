@@ -52,8 +52,9 @@ Future<String> get platformVersion async {
   return version;
 }
 
-initDcs(){
-  _channel.invokeMethod('initDcs');
+initDcs() async {
+  print('yxy---initDcs--1');
+  await _channel.invokeMethod('initDcs');
 }
 
 dcsAuth() {

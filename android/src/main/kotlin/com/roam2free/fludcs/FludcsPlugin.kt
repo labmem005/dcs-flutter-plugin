@@ -1,5 +1,6 @@
 package com.roam2free.fludcs
 
+import android.util.Log
 import com.roam2free.fludcs.handler.FludcsAuthHandler
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -21,6 +22,7 @@ class FludcsPlugin(registrar: Registrar, channel: MethodChannel) : MethodCallHan
     private val fludcsHandler = FludcsAuthHandler(channel,registrar.activity())
 
     override fun onMethodCall(call: MethodCall, result: Result) {
+        Log.e("yxy","yxy---methodCall---"+call.method)
         when (call.method) {
             "getPlatformVersion" -> result.success("Android ${android.os.Build.VERSION.RELEASE}")
             "initDcs" -> fludcsHandler.initDcs()

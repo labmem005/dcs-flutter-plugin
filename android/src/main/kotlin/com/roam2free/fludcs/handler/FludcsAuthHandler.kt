@@ -37,6 +37,15 @@ import java.util.ArrayList
 
 internal class FludcsAuthHandler(private val methodChannel: MethodChannel, private val activity: Activity) {
 
+
+    // 唤醒配置
+    // 格式必须为：浮点数，用','分隔，每个模型对应3个灵敏度
+    // 例如有2个模型,就需要6个灵敏度，0.35,0.35,0.40,0.45,0.45,0.55
+    private val WAKEUP_RES_PATH = "snowboy/common.res"
+    private val WAKEUP_UMDL_PATH = "snowboy/xiaoduxiaodu_all_11272017.umdl"
+    private val WAKEUP_SENSITIVITY = "0.35,0.35,0.40"
+    private val WAKEUP_HIGH_SENSITIVITY = "0.45,0.45,0.55"
+
     companion object {
         const val TAG = "Fludcs"
         const val CLIENT_ID = "sgYXkNGVXtyo2NrrPSBW6GkUtUuKnGYy"
@@ -49,18 +58,21 @@ internal class FludcsAuthHandler(private val methodChannel: MethodChannel, priva
         object : ILoginListener {
             override fun onSucceed(accessToken: String?) {
                 dcsSdk.run {}
+                Log.e("yxy","yxy---小度登录成功")
                 methodChannel.invokeMethod("onAuthSucceed", mapOf(
                         "accessToken" to accessToken
                 ))
             }
 
             override fun onFailed(errorMessage: String?) {
+                Log.e("yxy","yxy---小度登录失败")
                 methodChannel.invokeMethod("onAuthFailed", mapOf(
                         "errorMessage" to errorMessage
                 ))
             }
 
             override fun onCancel() {
+                Log.e("yxy","yxy---小度登录取消")
                 methodChannel.invokeMethod("onAuthCancel", null)
             }
 
@@ -138,8 +150,12 @@ internal class FludcsAuthHandler(private val methodChannel: MethodChannel, priva
     }
 
     fun initDcs() {
+        Log.e("yxy","yxy---initDcs")
+        // 第一步初始化sdk
+        // BaseAudioRecorder audioRecorder = new PcmAudioRecorderImpl(); pcm 输入方式
         val audioRecorder = AudioRecordImpl()
         val oauth = OauthCodeImpl(CLIENT_ID, activity)
+        // 唤醒单独开启唤醒进程；  如果不需要将唤醒放入一个单独进程，可以使用KittWakeUpImpl
         val wakeup = KittWakeUpServiceImpl(audioRecorder)
         val builder = DcsSdkBuilder()
         val sdkConfigProvider = object : DefaultSdkConfigProvider() {
@@ -170,12 +186,12 @@ internal class FludcsAuthHandler(private val methodChannel: MethodChannel, priva
                 wakeupWordList.add(WakeUpWord(2, "小度小度"))
                 wakeupWordList.add(WakeUpWord(3, "小度小度"))
                 val umdlPaths = ArrayList<String>()
-                umdlPaths.add("snowboy/xiaoduxiaodu_all_11272017.umdl")
+                umdlPaths.add(WAKEUP_UMDL_PATH)
                 return WakeUpConfig.Builder()
-                        .resPath("snowboy/common.res")
+                        .resPath(WAKEUP_RES_PATH)
                         .umdlPath(umdlPaths)
-                        .sensitivity("0.35,0.35,0.40")
-                        .highSensitivity("0.45,0.45,0.55")
+                        .sensitivity(WAKEUP_SENSITIVITY)
+                        .highSensitivity(WAKEUP_HIGH_SENSITIVITY)
                         .wakeUpWords(wakeupWordList)
                         .build()
             }
@@ -186,12 +202,14 @@ internal class FludcsAuthHandler(private val methodChannel: MethodChannel, priva
 
             override fun volume() = 0.8f
 
-            override fun enableWarning() = true
+            //是否启用唤醒
+            override fun enableWarning() = false
 
             override fun warningSource() = "assets://ding.wav"
 
         }
 
+        Log.e("yxy","yxy---deviceID---"+StandbyDeviceIdUtil.getStandbyDeviceId())
         dcsSdk = builder
                 .withSdkConfig(sdkConfigProvider)
                 .withWakeupProvider(wakeupProvider)
@@ -201,8 +219,9 @@ internal class FludcsAuthHandler(private val methodChannel: MethodChannel, priva
                 .withDeviceId(StandbyDeviceIdUtil.getStandbyDeviceId())
                 .build()
         internalApi = (dcsSdk as DcsSdkImpl).internalApi
-//        internalApi.setSupportOneshot(false)
+        internalApi.setSupportOneshot(false)
         internalApi.initWakeUp()
+        //asr的识别类型-在线or离线
         internalApi.setAsrMode(DcsConfig.ASR_MODE_ONLINE)
 
 
